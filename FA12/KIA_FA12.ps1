@@ -1,5 +1,6 @@
 # Định nghĩa đường dẫn tải file từ SharePoint (thay thế bằng URL thực tế)
-$url = "https://kaglav.sharepoint.com/:u:/s/IT/IQBHE_P5KsvdRLDh8T_jhcyvAXd59pjnsG1BDfnEsRazsoc?e=lbbG0o"  # Thay thế bằng đường dẫn thực tế đến file KIA_FA12.Zip
+
+$url = "https://kaglav.sharepoint.com/:u:/s/IT/IQBHE_P5KsvdRLDh8T_jhcyvAXd59pjnsG1BDfnEsRazsoc?e=lbbG0o&download=1"  # Thay thế bằng đường dẫn thực tế đến file KIA_FA12.Zip +"&download=1" 
 
 # Đường dẫn lưu file zip và thư mục đích
 $zipPath = "C:\FAST\KIA_FA12.Zip"
