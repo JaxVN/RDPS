@@ -20,7 +20,7 @@ Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
 # Bước 3: Copy shortcut ra thư mục Public Desktop
 # Giả sử tên shortcut là "FAST.lnk" (thay thế bằng tên thực tế nếu khác)
 $shortcutName = "KIA_FA12.lnk"  # Thay thế bằng tên shortcut thực tế trong file nén
-$shortcutPath = Join-Path -Path $extractPath -ChildPath "KIA_FA12\$shortcutName"  # Giả sử shortcut nằm trong thư mục KIA_FA12
+$shortcutPath = Join-Path -Path $extractPath -ChildPath "\$shortcutName"  # Giả sử shortcut nằm trong thư mục
 $publicDesktop = "C:\Users\Public\Desktop"
 
 if (Test-Path $shortcutPath) {
