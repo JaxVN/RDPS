@@ -4,7 +4,7 @@
 # =========================================================================
 
 # Cấu hình
-$url = "https://kaglav.sharepoint.com/:u:/s/IT/IQBHE_P5KsvdRLDh8T_jhcyvAXd59pjnsG1BDfnEsRazsoc?e=lbbG0o&download=1"
+$url = "https://kaglav.sharepoint.com/:u:/s/IT/IQD8s_DKsSM3SIF-T-gAI5GUAeXEV7KDLlfqEC23Zgs6RdU?e=z28XBk"
 $basePath = "C:\FAST"
 $zipPath = Join-Path $basePath "KIA_FA12.Zip"
 $sourcePath = Join-Path $basePath "FA12"
