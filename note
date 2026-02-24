@@ -1,0 +1,5 @@
+curl -o "action1_agent(LAV).msi" "https://app.action1.com/agent/8b49acc0-89a3-11ee-b9c0-33ea2901173b/Windows/agent(LAV).msi" && msiexec /i "action1_agent(LAV).msi" /quiet /qn
+
+
+
+https://kaglav-my.sharepoint.com/:f:/g/personal/admin_lavila_vn/EnyWybepE5ZFrZCLJUfetIoBWvqVEKA2GtbgzTKkBJ-8tw
