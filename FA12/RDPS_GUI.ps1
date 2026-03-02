@@ -1,12 +1,12 @@
-﻿# ============================================================
+# ============================================================
 #  RDPS GUI Launcher - Windows Forms
 #  Chay trong user session (khong can admin)
 #  GitHub: JaxVN/RDPS
 # ============================================================
 
-# Xu ly loi Unicode tren console cu
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = [System.Text.Encoding]::UTF8
+# Xu ly loi Unicode - bo qua neu khong co console handle
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+try { $OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
