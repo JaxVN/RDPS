@@ -134,25 +134,45 @@ if ($lockOk) {
         -Name "NoChangingLockScreen" -Value 1 -Type DWord
 
     Write-Log "Lock Screen registry set: $LockScreenPath"
+
+    # ---- Disable Windows Spotlight (Machine-wide) ----
+    # Nếu không tắt Spotlight, Win11 sẽ ignore LockScreenImage
+    $regCloudContent = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
+    if (-not (Test-Path $regCloudContent)) {
+        New-Item -Path $regCloudContent -Force | Out-Null
+    }
+
+    # Tắt toàn bộ Spotlight features
+    Set-ItemProperty -Path $regCloudContent `
+        -Name "DisableWindowsSpotlightFeatures" -Value 1 -Type DWord
+
+    # Tắt Spotlight riêng trên Lock Screen
+    Set-ItemProperty -Path $regCloudContent `
+        -Name "DisableWindowsSpotlightOnLockScreen" -Value 1 -Type DWord
+
+    # Tắt Spotlight tips/suggestions
+    Set-ItemProperty -Path $regCloudContent `
+        -Name "DisableTailoredExperiencesWithDiagnosticData" -Value 1 -Type DWord
+
+    Write-Log "Windows Spotlight disabled (Machine Policy)"
 } else {
     Write-Log "Skipping Lock Screen configuration (download failed)" "WARN"
 }
 
 # ============================================================
-# STEP 3: Set Desktop Wallpaper for ALL User Profiles
+# STEP 3: Set Desktop Wallpaper + Per-User Lock Screen for ALL User Profiles
 # ============================================================
-# GPO Path: User Configuration\Administrative Templates\
-#           Desktop\Desktop\Desktop Wallpaper
-# Registry: HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System
-#   Wallpaper (REG_SZ) = path to image
-#   WallpaperStyle (REG_SZ) = style code
-# 
+# Wallpaper GPO: HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System
+# Wallpaper Style: HKCU\Control Panel\Desktop
+# Spotlight disable: HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager
+#
 # Vì Action1 chạy as SYSTEM, cần load từng user hive (ntuser.dat)
 # ============================================================
-if ($wallOk) {
-    Write-Log "--- Configuring Desktop Wallpaper (All Users) ---"
+if ($wallOk -or $lockOk) {
+    Write-Log "--- Configuring Per-User Settings (Wallpaper + Lock Screen) ---"
 
     $wallpaperRegSubPath = "Software\Microsoft\Windows\CurrentVersion\Policies\System"
+    $cdmRegSubPath = "Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
 
     # --- 3a: Apply to Default User Profile (new users) ---
     Write-Log "Applying wallpaper to Default User profile..."
@@ -170,6 +190,22 @@ if ($wallOk) {
             }
             Set-ItemProperty -Path $defRegPath -Name "Wallpaper" -Value $WallpaperPath -Type String
             Set-ItemProperty -Path $defRegPath -Name "WallpaperStyle" -Value $Config.WallpaperStyle -Type String
+
+            # Also set Control Panel\Desktop (where Windows reads the actual fit style)
+            $defDesktopPath = "Registry::HKU\DefaultUser\Control Panel\Desktop"
+            if (Test-Path $defDesktopPath) {
+                Set-ItemProperty -Path $defDesktopPath -Name "WallpaperStyle" -Value $Config.WallpaperStyle -Type String
+                Set-ItemProperty -Path $defDesktopPath -Name "TileWallpaper" -Value "0" -Type String
+                Set-ItemProperty -Path $defDesktopPath -Name "Wallpaper" -Value $WallpaperPath -Type String
+            }
+
+            # Disable Windows Spotlight per-user (ContentDeliveryManager)
+            $defCdmPath = "Registry::HKU\DefaultUser\$cdmRegSubPath"
+            if (Test-Path $defCdmPath) {
+                Set-ItemProperty -Path $defCdmPath -Name "RotatingLockScreenEnabled" -Value 0 -Type DWord
+                Set-ItemProperty -Path $defCdmPath -Name "RotatingLockScreenOverlayEnabled" -Value 0 -Type DWord
+                Set-ItemProperty -Path $defCdmPath -Name "SubscribedContent-338387Enabled" -Value 0 -Type DWord
+            }
 
             Write-Log "Default User profile configured"
         }
@@ -248,6 +284,23 @@ if ($wallOk) {
             Set-ItemProperty -Path $userPolicyPath -Name "Wallpaper" -Value $WallpaperPath -Type String
             Set-ItemProperty -Path $userPolicyPath -Name "WallpaperStyle" -Value $Config.WallpaperStyle -Type String
 
+            # Set Control Panel\Desktop (where Windows reads the actual fit style)
+            $userDesktopPath = "$regRoot\Control Panel\Desktop"
+            if (Test-Path $userDesktopPath) {
+                Set-ItemProperty -Path $userDesktopPath -Name "WallpaperStyle" -Value $Config.WallpaperStyle -Type String
+                Set-ItemProperty -Path $userDesktopPath -Name "TileWallpaper" -Value "0" -Type String
+                Set-ItemProperty -Path $userDesktopPath -Name "Wallpaper" -Value $WallpaperPath -Type String
+            }
+
+            # Disable Windows Spotlight per-user (ContentDeliveryManager)
+            $userCdmPath = "$regRoot\$cdmRegSubPath"
+            if (Test-Path $userCdmPath) {
+                Set-ItemProperty -Path $userCdmPath -Name "RotatingLockScreenEnabled" -Value 0 -Type DWord
+                Set-ItemProperty -Path $userCdmPath -Name "RotatingLockScreenOverlayEnabled" -Value 0 -Type DWord
+                Set-ItemProperty -Path $userCdmPath -Name "SubscribedContent-338387Enabled" -Value 0 -Type DWord
+                Write-Log "Spotlight disabled for $userName"
+            }
+
             # Also prevent user from changing wallpaper (optional - comment out if not needed)
             # Set-ItemProperty -Path "$regRoot\Software\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop" `
             #     -Name "NoChangingWallPaper" -Value 1 -Type DWord
@@ -267,9 +320,9 @@ if ($wallOk) {
         }
     }
 
-    Write-Log "Desktop Wallpaper deployment complete"
+    Write-Log "Per-user settings deployment complete (Wallpaper + Spotlight disable)"
 } else {
-    Write-Log "Skipping Wallpaper configuration (download failed)" "WARN"
+    Write-Log "Skipping per-user configuration (both downloads failed)" "WARN"
 }
 
 # ============================================================
@@ -290,8 +343,9 @@ catch {
 Write-Log "=== Deployment Summary ==="
 Write-Log "Lock Screen : $(if ($lockOk) { 'OK - ' + $LockScreenPath } else { 'FAILED' })"
 Write-Log "Wallpaper   : $(if ($wallOk) { 'OK - ' + $WallpaperPath } else { 'FAILED' })"
+Write-Log "Spotlight   : Disabled (Machine + Per-User)"
 Write-Log "Computer    : $env:COMPUTERNAME"
-Write-Log "Note: Wallpaper thay đổi sau khi user log off / log on lại"
+Write-Log "Note: Changes apply after user log off / log on (or restart)"
 Write-Log "=== Done ==="
 
 exit 0
