@@ -1,56 +1,44 @@
 # =============================================
-# THIẾT LẬP BACKGROUND & LOCK SCREEN (theo hướng dẫn KAG-ITUG-031)
+# s2.ps1 - CHỈ THIẾT LẬP BACKGROUND & LOCK SCREEN
 # =============================================
 
 $BasePath = "C:\Users\Public\Public Pictures\S"
-$DS_Path  = Join-Path $BasePath "DS"   # Background Slideshow
-$LS_Path  = Join-Path $BasePath "LS"   # Lock Screen Slideshow
+$DS_Path  = Join-Path $BasePath "DS"
+$LS_Path  = Join-Path $BasePath "LS"
 
 Write-Host "🔧 Đang thiết lập Background và Lock Screen..." -ForegroundColor Cyan
 
-# Kiểm tra thư mục tồn tại
 if (-not (Test-Path $DS_Path) -or -not (Test-Path $LS_Path)) {
-    Write-Host "❌ Không tìm thấy thư mục DS hoặc LS!" -ForegroundColor Red
-    Write-Host "Vui lòng kiểm tra đường dẫn: $BasePath" -ForegroundColor Red
+    Write-Host "❌ Không tìm thấy thư mục DS hoặc LS tại: $BasePath" -ForegroundColor Red
     exit 1
 }
 
-# ------------------- DESKTOP BACKGROUND (Slideshow) -------------------
-Write-Host "   • Thiết lập Desktop Background (Slideshow - DS folder)..." -ForegroundColor Yellow
+# ==================== DESKTOP BACKGROUND ====================
+Write-Host "   • Thiết lập Desktop Background (DS)..." -ForegroundColor Yellow
 
-$RegPathDesktop = "HKCU:\Control Panel\Personalization\Desktop Slideshow"
+$RegDesktop = "HKCU:\Control Panel\Personalization\Desktop Slideshow"
+if (-not (Test-Path $RegDesktop)) { New-Item -Path $RegDesktop -Force | Out-Null }
 
-# Tạo key nếu chưa có
-if (-not (Test-Path $RegPathDesktop)) {
-    New-Item -Path $RegPathDesktop -Force | Out-Null
-}
+Set-ItemProperty -Path $RegDesktop -Name "SlideshowDirectoryPath" -Value $DS_Path -Force
+Set-ItemProperty -Path $RegDesktop -Name "Interval" -Value 1800000 -Force        # 30 phút
+Set-ItemProperty -Path $RegDesktop -Name "Shuffle" -Value 0 -Force
 
-Set-ItemProperty -Path $RegPathDesktop -Name "SlideshowDirectoryPath" -Value $DS_Path -Force
-Set-ItemProperty -Path $RegPathDesktop -Name "Interval" -Value 1800000 -Force          # 30 phút
-Set-ItemProperty -Path $RegPathDesktop -Name "Shuffle" -Value 0 -Force
-Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" -Name "backgroundType" -Value 2 -Force -ErrorAction SilentlyContinue
-Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" -Name "SlideshowEnabled" -Value 1 -Force -ErrorAction SilentlyContinue
+# ==================== LOCK SCREEN ====================
+Write-Host "   • Thiết lập Lock Screen (LS)..." -ForegroundColor Yellow
 
-# ------------------- LOCK SCREEN (Slideshow) -------------------
-Write-Host "   • Thiết lập Lock Screen (Slideshow - LS folder)..." -ForegroundColor Yellow
+$RegLock = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Lock Screen"
+if (-not (Test-Path $RegLock)) { New-Item -Path $RegLock -Force | Out-Null }
 
-$RegPathLock = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Lock Screen"
+Set-ItemProperty -Path $RegLock -Name "SlideshowEnabled" -Value 1 -Force
+Set-ItemProperty -Path $RegLock -Name "SlideshowDirectoryPath" -Value $LS_Path -Force
+Set-ItemProperty -Path $RegLock -Name "SlideShowDuration" -Value 1800000 -Force
 
-if (-not (Test-Path $RegPathLock)) {
-    New-Item -Path $RegPathLock -Force | Out-Null
-}
-
-Set-ItemProperty -Path $RegPathLock -Name "SlideshowEnabled" -Value 1 -Force
-Set-ItemProperty -Path $RegPathLock -Name "SlideshowDirectoryPath" -Value $LS_Path -Force
-Set-ItemProperty -Path $RegPathLock -Name "SlideShowDuration" -Value 1800000 -Force     # 30 phút
-
-# Tắt một số tính năng Spotlight
-Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "RotatingLockScreenEnabled" -Value 0 -Force
-Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "RotatingLockScreenOverlayEnabled" -Value 0 -Force
-
-# Áp dụng thay đổi
-Start-Process -FilePath "RUNDLL32.EXE" -ArgumentList "USER32.DLL,UpdatePerUserSystemParameters 1,True" -NoNewWindow -Wait -ErrorAction SilentlyContinue
+# Tắt Windows Spotlight
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "RotatingLockScreenEnabled" -Value 0 -Force -ErrorAction SilentlyContinue
 
 Write-Host "✅ Đã thiết lập hoàn tất Background (DS) và Lock Screen (LS)!" -ForegroundColor Green
-Write-Host "   Desktop Background → $DS_Path" -ForegroundColor Green
-Write-Host "   Lock Screen        → $LS_Path" -ForegroundColor Green
+Write-Host "   → Desktop : $DS_Path" -ForegroundColor Green
+Write-Host "   → LockScreen: $LS_Path" -ForegroundColor Green
+
+# Áp dụng ngay
+Start-Process -FilePath "RUNDLL32.EXE" -ArgumentList "USER32.DLL,UpdatePerUserSystemParameters 1,True" -NoNewWindow -Wait -ErrorAction SilentlyContinue
