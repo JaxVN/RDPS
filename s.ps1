@@ -5,7 +5,7 @@
 $RepoUrl = "https://github.com/JaxVN/RDPS/archive/refs/heads/main.zip"
 $TempZip = "$env:TEMP\RDPS-main.zip"
 $ExtractPath = "$env:TEMP\RDPS-main"
-$TargetFolder = "C:\RDPS_S"          # Thư mục đích trên máy nhân viên
+$TargetFolder = "C:\Users\Public\Pictures"          # Thư mục đích trên máy nhân viên
 
 Write-Host "🔄 Đang tải thư mục S từ GitHub..." -ForegroundColor Cyan
 
