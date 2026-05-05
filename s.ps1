@@ -39,4 +39,3 @@ Remove-Item -Path $TempZip -Force -ErrorAction SilentlyContinue
 Remove-Item -Path $ExtractPath -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host "Hoàn tất!" -ForegroundColor Green
-pause
