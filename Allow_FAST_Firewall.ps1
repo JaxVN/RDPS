@@ -1,19 +1,19 @@
 # =============================================
 # Allow all .exe in C:\FAST - Firewall Rules
-# Dùng cho Action1 tải từ GitHub
+# Deploy qua Action1
 # =============================================
 
-$BasePath = "C:\FAST"
-$TempPath = "$BasePath\Temp"
-$LogPath  = "$TempPath\FAST_Firewall_Rules.log"
-$Description = "Cho phép file exe trong thu muc FAST - Deploy by Action1"
+$BasePath   = "C:\FAST"
+$TempPath   = "$BasePath\Temp"
+$LogPath    = "$TempPath\FAST_Firewall_Rules.log"
+$Description = "Cho phep file exe trong thu muc FAST - Deploy by Action1"
 
-# Tạo thư mục Temp nếu chưa có
+# Tao thu muc Temp neu chua co
 if (-not (Test-Path $TempPath)) {
     New-Item -Path $TempPath -ItemType Directory -Force | Out-Null
 }
 
-# Hàm ghi log
+# Ham ghi log
 function Write-Log {
     param([string]$Message)
     $time = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -21,25 +21,34 @@ function Write-Log {
 }
 
 try {
-    Write-Log "=== BẮT ĐẦU SCRIPT ==="
-    Write-Log "Thư mục gốc: $BasePath"
+    Write-Log "=== BAT DAU SCRIPT ==="
+    Write-Log "Thu muc: $BasePath"
 
     if (-not (Test-Path $BasePath)) {
-        Write-Log "ERROR: Thư mục $BasePath không tồn tại!"
+        Write-Log "ERROR: Thu muc $BasePath khong ton tai!"
         exit 1
     }
 
-    # Xóa rule cũ (tránh trùng lặp)
+    # Lay tat ca file .exe
+    $exes = Get-ChildItem -Path $BasePath -Filter *.exe -Recurse -ErrorAction Stop
+    $count = $exes.Count
+
+    Write-Log "Tim thay $count file .exe"
+
+    if ($count -eq 0) {
+        Write-Log "WARNING: Khong tim thay file .exe nao!"
+        Write-Log "=== KET THUC SCRIPT ==="
+        exit 0
+    }
+
+    # Xoa rule cu
     Get-NetFirewallRule | 
-        Where-Object { $_.DisplayName -like "FAST*" -or $_.DisplayName -like "Allow FAST*" } | 
+        Where-Object { $_.DisplayName -like "FAST*" } | 
         Remove-NetFirewallRule -ErrorAction SilentlyContinue
     
-    Write-Log "Đã xóa các rule FAST cũ"
+    Write-Log "Da xoa rule FAST cu"
 
-    # Lấy tất cả file .exe trong C:\FAST (kể cả thư mục con)
-    $exes = Get-ChildItem -Path $BasePath -Filter *.exe -Recurse -ErrorAction Stop
-
-    $count = 0
+    # Tao rule moi
     foreach ($exe in $exes) {
         $exeName = $exe.Name
         $exePath = $exe.FullName
@@ -50,7 +59,8 @@ try {
             -Program $exePath `
             -Action Allow `
             -Profile Any `
-            -Description $Description -ErrorAction SilentlyContinue | Out-Null
+            -Description $Description `
+            -ErrorAction SilentlyContinue | Out-Null
 
         # Outbound Rule
         New-NetFirewallRule -DisplayName "FAST Outbound - $exeName" `
@@ -58,19 +68,16 @@ try {
             -Program $exePath `
             -Action Allow `
             -Profile Any `
-            -Description $Description -ErrorAction SilentlyContinue | Out-Null
+            -Description $Description `
+            -ErrorAction SilentlyContinue | Out-Null
 
-        Write-Log "✓ Đã tạo rule cho: $exeName"
-        $count++
+        Write-Log "Da tao rule cho: $exeName"
     }
 
-    Write-Log "HOÀN TẤT! Đã tạo firewall rules cho $count file .exe"
-    Write-Log "=== KẾT THÚC SCRIPT ==="
-
-    Write-Host "Hoàn tất! Log được lưu tại: $LogPath" -ForegroundColor Green
+    Write-Log "HOAN TAT! Da tao rule cho $count file .exe ($($count*2) rules)"
+    Write-Log "=== KET THUC SCRIPT ==="
 
 } catch {
     Write-Log "ERROR: $($_.Exception.Message)"
-    Write-Host "Lỗi xảy ra! Vui lòng kiểm tra log." -ForegroundColor Red
     exit 1
 }
