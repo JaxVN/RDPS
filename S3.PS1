@@ -76,6 +76,10 @@ try {
     $UserBackgroundPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers"
     if (!(Test-Path $UserBackgroundPath)) { New-Item -Path $UserBackgroundPath -Force | Out-Null }
     Set-ItemProperty -Path $UserBackgroundPath -Name "BackgroundType" -Value 2 -Force
+    
+    # FIX #1: BẬT SLIDESHOW TỰ ĐỘNG (Cái này bị thiếu khiến slideshow không chạy)
+    Set-ItemProperty -Path $UserBackgroundPath -Name "UseDesktopSlideshow" -Value 1 -Force
+    Write-Log "Da bat Desktop Slideshow tu dong."
 
     $ThemePath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
     if (Test-Path $ThemePath) {
@@ -133,4 +137,7 @@ public static extern int SystemParametersInfo(int uAction, int uParam, string lv
 } catch {
     Write-Log "Khong the force refresh giao dien ngay lap tuc: $_. Thay doi se ap dung khi user Re-log." "WARNING"
 }
-"==============================================================================" | Add-Type -Path $LogPath -ErrorAction SilentlyContinue
+
+# FIX #2: SỬA LỖI CRASH DÒNG 136 - Thay thế Add-Type bằng Add-Content
+Write-Log "==============================================================================" 
+Add-Content -Path $LogPath -Value "==============================================================================" -Force
