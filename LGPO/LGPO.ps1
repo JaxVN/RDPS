@@ -1,6 +1,6 @@
 # Định nghĩa đường dẫn tải file từ SharePoint (thay thế bằng URL thực tế)
 
-$url = "https://github.com/JaxVN/LGPO/blob/main/LGPO.zip"  # Thay thế bằng đường dẫn thực tế đến file ATL_FA12.Zip +"&download=1" 
+$url = "blob:https://github.com/1a2c16f5-e4f1-48b7-8138-3587643ccc89"  # 
 
 # Đường dẫn lưu file zip và thư mục đích
 $zipPath = "C:\Soft\LGPO.Zip"
