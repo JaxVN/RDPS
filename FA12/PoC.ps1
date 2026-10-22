@@ -3,7 +3,7 @@
 # =============================================
 
 # URL SharePoint của file nén mới (bạn thay bằng link thật + &download=1)
-$url = "https://kaglav.sharepoint.com/:u:/s/IT/YOUR_NEW_SHAREPOINT_LINK_HERE&download=1"
+$url = "https://kaglav.sharepoint.com/:u:/s/IT/IQDy8E0cq4dIQLFUkOsNa_pbAZYyKa57WuYKGk3q5ubnqhs&download=1"
 
 $zipPath     = "C:\FAST\PoC_01.Zip"
 $extractPath = "C:\FAST"
