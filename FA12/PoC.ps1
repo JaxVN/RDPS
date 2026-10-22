@@ -1,33 +1,46 @@
-# Định nghĩa đường dẫn tải file từ SharePoint (thay thế bằng URL thực tế)
+# =============================================
+# PoC - Cài 3 bộ phần mềm từ 1 file nén
+# =============================================
 
-$url = "https://kaglav.sharepoint.com/:u:/s/IT/IQDy8E0cq4dIQLFUkOsNa_pbAZYyKa57WuYKGk3q5ubnqhs&download=1"  # Thay thế bằng đường dẫn thực tế đến file VPH_FA12.Zip +"&download=1" 
+# URL SharePoint của file nén mới (bạn thay bằng link thật + &download=1)
+$url = "https://kaglav.sharepoint.com/:u:/s/IT/YOUR_NEW_SHAREPOINT_LINK_HERE&download=1"
 
-# Đường dẫn lưu file zip và thư mục đích
-$zipPath = "C:\FAST\PoC_01.Zip"
+$zipPath     = "C:\FAST\PoC_01.Zip"
 $extractPath = "C:\FAST"
-
-# Tạo thư mục C:\FAST nếu chưa tồn tại
-if (-not (Test-Path $extractPath)) {
-    New-Item -ItemType Directory -Path $extractPath -Force
-}
-
-# Bước 1: Tải file nén từ SharePoint về C:\FAST
-Invoke-WebRequest -Uri $url -OutFile $zipPath
-
-# Bước 2: Giải nén file VPH_FA12.Zip vào C:\FAST
-Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
-
-# Bước 3: Copy shortcut ra thư mục Public Desktop
-# Giả sử tên shortcut là "FAST.lnk" (thay thế bằng tên thực tế nếu khác)
-$shortcutName = "VPH_FA12.lnk"  # Thay thế bằng tên shortcut thực tế trong file nén
-$shortcutPath = Join-Path -Path $extractPath -ChildPath $shortcutName  # Shortcut nằm trực tiếp trong C:\FAST sau giải nén
 $publicDesktop = "C:\Users\Public\Desktop"
 
-if (Test-Path $shortcutPath) {
-    Copy-Item -Path $shortcutPath -Destination $publicDesktop -Force
-} else {
-    Write-Error "Shortcut không tìm thấy tại $shortcutPath"
+# Tạo thư mục C:\FAST nếu chưa có
+if (-not (Test-Path $extractPath)) {
+    New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
 }
 
-# Xóa file zip sau khi giải nén (tùy chọn)
-Remove-Item -Path $zipPath -Force
+try {
+    Write-Host "Đang tải file nén từ SharePoint..." -ForegroundColor Cyan
+    Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing -ErrorAction Stop
+
+    Write-Host "Đang giải nén..." -ForegroundColor Cyan
+    Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+
+    # Danh sách 3 shortcut cần copy
+    $shortcuts = @("PoC_01.lnk", "PoC_02.lnk", "PoC_03.lnk")
+
+    foreach ($shortcut in $shortcuts) {
+        $source = Join-Path -Path $extractPath -ChildPath $shortcut
+
+        if (Test-Path $source) {
+            Copy-Item -Path $source -Destination $publicDesktop -Force
+            Write-Host "Đã copy: $shortcut → Public Desktop" -ForegroundColor Green
+        } else {
+            Write-Host "Không tìm thấy shortcut: $shortcut" -ForegroundColor Yellow
+        }
+    }
+
+    # Xóa file ZIP sau khi giải nén
+    Remove-Item -Path $zipPath -Force -ErrorAction SilentlyContinue
+
+    Write-Host "`nHoàn tất cài đặt 3 bộ PoC!" -ForegroundColor Green
+}
+catch {
+    Write-Host "Lỗi: $_" -ForegroundColor Red
+    exit 1
+}
