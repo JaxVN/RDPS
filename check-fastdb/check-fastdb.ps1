@@ -1,5 +1,5 @@
 $root = 'C:\FAST'
-$out  = Join-Path $root 'FAST_current_port.csv'
+$out  = Join-Path $root '\Tools\FAST_current_port.csv'
 $pc   = $env:COMPUTERNAME
 $time = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
 
